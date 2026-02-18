@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, Sparkles, Send, Linkedin, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 
@@ -12,6 +12,14 @@ export default function LinkedInPage() {
   const [imageUrl, setImageUrl] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState('')
+  const [time, setTime] = useState('')
+
+  useEffect(() => {
+    const updateTime = () => setTime(new Date().toLocaleTimeString('en-US', { hour12: false }))
+    updateTime()
+    const t = setInterval(updateTime, 1000)
+    return () => clearInterval(t)
+  }, [])
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -65,7 +73,6 @@ export default function LinkedInPage() {
     try {
       let finalImageUrl = imageUrl
       
-      // Upload image if file selected
       if (imageFile) {
         const formData = new FormData()
         formData.append('image', imageFile)
@@ -108,136 +115,521 @@ export default function LinkedInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
-      <header className="bg-black/30 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/" className="text-white hover:text-blue-400 transition">
-            <ArrowLeft size={24} />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Bebas+Neue&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          background: #0A0A0A;
+          color: #E8E8E0;
+          font-family: 'IBM Plex Mono', monospace;
+          min-height: 100vh;
+        }
+
+        .linkedin-root {
+          min-height: 100vh;
+          background: #0A0A0A;
+          display: grid;
+          grid-template-rows: auto 1fr;
+        }
+
+        /* ── HEADER ── */
+        .linkedin-header {
+          border-bottom: 2px solid #E8E8E0;
+          padding: 0 40px;
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
+          height: 72px;
+          gap: 32px;
+        }
+        .linkedin-back {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          border: 1px solid #333;
+          color: #666;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+        .linkedin-back:hover {
+          border-color: #0088FF;
+          color: #0088FF;
+          background: #0088FF/5;
+        }
+        .linkedin-title-area {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+        .linkedin-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 28px;
+          letter-spacing: 0.08em;
+          color: #E8E8E0;
+        }
+        .linkedin-badge {
+          font-size: 9px;
+          letter-spacing: 0.2em;
+          color: #0088FF;
+          padding: 4px 12px;
+          border: 1px solid #0088FF;
+          background: #0088FF/10;
+        }
+        .linkedin-time {
+          font-size: 13px;
+          letter-spacing: 0.1em;
+          color: #555;
+        }
+
+        /* ── MAIN ── */
+        .linkedin-main {
+          padding: 40px;
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
+        }
+
+        /* ── SECTION ── */
+        .linkedin-section {
+          border: 1px solid #1E1E1E;
+          background: #0A0A0A;
+          margin-bottom: 32px;
+          animation: fadeUp 0.5s ease both;
+        }
+        .linkedin-section-header {
+          padding: 20px 32px;
+          border-bottom: 1px solid #1E1E1E;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .linkedin-section-icon {
+          font-size: 18px;
+        }
+        .linkedin-section-title {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          color: #E8E8E0;
+          text-transform: uppercase;
+        }
+        .linkedin-section-content {
+          padding: 32px;
+        }
+
+        /* ── AUTH BUTTON ── */
+        .linkedin-auth-btn {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 16px 28px;
+          border: 2px solid #0088FF;
+          background: transparent;
+          color: #0088FF;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+        }
+        .linkedin-auth-btn:hover {
+          background: #0088FF;
+          color: #0A0A0A;
+        }
+
+        /* ── INPUT FIELD ── */
+        .linkedin-field {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        .linkedin-label {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          color: #666;
+          text-transform: uppercase;
+        }
+        .linkedin-input {
+          background: #0F0F0F;
+          border: 1px solid #1E1E1E;
+          color: #E8E8E0;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 13px;
+          padding: 14px 20px;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .linkedin-input::placeholder {
+          color: #444;
+        }
+        .linkedin-input:focus {
+          border-color: #0088FF;
+        }
+        .linkedin-textarea {
+          background: #0F0F0F;
+          border: 1px solid #1E1E1E;
+          color: #E8E8E0;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 13px;
+          padding: 20px;
+          outline: none;
+          resize: vertical;
+          min-height: 280px;
+          transition: border-color 0.2s;
+          line-height: 1.8;
+        }
+        .linkedin-textarea::placeholder {
+          color: #444;
+        }
+        .linkedin-textarea:focus {
+          border-color: #0088FF;
+        }
+
+        /* ── GENERATE BUTTON ── */
+        .linkedin-gen-btn {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 16px 28px;
+          border: 2px solid #FF00AA;
+          background: transparent;
+          color: #FF00AA;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+        }
+        .linkedin-gen-btn:hover:not(:disabled) {
+          background: #FF00AA;
+          color: #0A0A0A;
+        }
+        .linkedin-gen-btn:disabled {
+          border-color: #333;
+          color: #333;
+          cursor: not-allowed;
+        }
+
+        /* ── IMAGE UPLOAD ── */
+        .linkedin-upload-area {
+          border: 2px dashed #1E1E1E;
+          background: #0F0F0F;
+          padding: 48px 32px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-bottom: 16px;
+        }
+        .linkedin-upload-area:hover {
+          border-color: #0088FF;
+          background: #0088FF/5;
+        }
+        .linkedin-upload-icon {
+          color: #555;
+          margin: 0 auto 16px;
+        }
+        .linkedin-upload-text {
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          color: #666;
+          margin-bottom: 8px;
+        }
+        .linkedin-upload-hint {
+          font-size: 9px;
+          letter-spacing: 0.06em;
+          color: #444;
+        }
+        .linkedin-upload-input {
+          display: none;
+        }
+
+        /* ── IMAGE PREVIEW ── */
+        .linkedin-image-preview {
+          position: relative;
+          margin-bottom: 16px;
+        }
+        .linkedin-preview-img {
+          width: 100%;
+          max-height: 400px;
+          object-fit: cover;
+          border: 1px solid #1E1E1E;
+        }
+        .linkedin-remove-btn {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #FF3B00;
+          border: none;
+          color: #FFF;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .linkedin-remove-btn:hover {
+          background: #FF5520;
+        }
+
+        /* ── URL INPUT ── */
+        .linkedin-url-hint {
+          font-size: 10px;
+          letter-spacing: 0.06em;
+          color: #555;
+          margin-bottom: 8px;
+        }
+
+        /* ── ACTION BUTTONS ── */
+        .linkedin-actions {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 16px;
+          margin-top: 24px;
+        }
+        .linkedin-post-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 18px 32px;
+          border: 2px solid #00FF88;
+          background: transparent;
+          color: #00FF88;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+        }
+        .linkedin-post-btn:hover:not(:disabled) {
+          background: #00FF88;
+          color: #0A0A0A;
+        }
+        .linkedin-post-btn:disabled {
+          border-color: #333;
+          color: #333;
+          cursor: not-allowed;
+        }
+        .linkedin-clear-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px 24px;
+          border: 1px solid #FF3B00;
+          background: transparent;
+          color: #FF3B00;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+        }
+        .linkedin-clear-btn:hover {
+          background: #FF3B00;
+          color: #0A0A0A;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+          .linkedin-header {
+            grid-template-columns: auto 1fr;
+            padding: 0 20px;
+          }
+          .linkedin-time { display: none; }
+          .linkedin-main { padding: 20px; }
+          .linkedin-actions { grid-template-columns: 1fr; }
+        }
+
+        /* ── SCANLINE ── */
+        .linkedin-root::after {
+          content: '';
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.04) 2px,
+            rgba(0,0,0,0.04) 4px
+          );
+          z-index: 100;
+        }
+
+        /* ── FADE UP ── */
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .linkedin-section:nth-child(1) { animation-delay: 0s; }
+        .linkedin-section:nth-child(2) { animation-delay: 0.1s; }
+        .linkedin-section:nth-child(3) { animation-delay: 0.2s; }
+      `}</style>
+
+      <div className="linkedin-root">
+        {/* ── HEADER ── */}
+        <header className="linkedin-header">
+          <Link href="/" className="linkedin-back">
+            <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-            <Linkedin className="text-blue-500" size={32} />
-            LinkedIn Auto-Post
-          </h1>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        
-        {/* Auth Section */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 mb-6">
-          <h2 className="text-white font-semibold mb-4">🔐 Authentication</h2>
-          <button
-            onClick={handleAuth}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition"
-          >
-            <Linkedin size={20} />
-            Connect LinkedIn
-          </button>
-        </div>
-
-        {/* Generate Section */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 mb-6">
-          <h2 className="text-white font-semibold mb-4">✨ Generate Post</h2>
           
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Topic (e.g., AI automation for restaurants)"
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 mb-4 focus:outline-none focus:border-blue-400"
-          />
-          
-          <button
-            onClick={handleGenerate}
-            disabled={loading || !topic}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition"
-          >
-            <Sparkles size={20} />
-            {loading ? 'Generating...' : 'Generate with AI'}
-          </button>
-        </div>
+          <div className="linkedin-title-area">
+            <h1 className="linkedin-title">LINKEDIN AUTO-POST</h1>
+            <span className="linkedin-badge">SOCIAL</span>
+          </div>
 
-        {/* Content Section */}
-        {content && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 mb-6">
-            <h2 className="text-white font-semibold mb-4">📝 Post Content</h2>
-            
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={10}
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 mb-4 focus:outline-none focus:border-blue-400"
-            />
-            
-            {/* Image Upload */}
-            <div className="mb-4">
-              <label className="text-white font-semibold mb-2 block">📸 Add Image (Optional)</label>
-              
-              {!imagePreview ? (
-                <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:border-blue-400 transition cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    id="image-upload"
-                  />
-                  <label htmlFor="image-upload" className="cursor-pointer">
-                    <Upload className="mx-auto text-gray-400 mb-2" size={48} />
-                    <p className="text-gray-400">Click to upload image</p>
-                    <p className="text-gray-500 text-sm mt-1">JPG, PNG, GIF (Max 5MB)</p>
-                  </label>
-                </div>
-              ) : (
-                <div className="relative">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    className="w-full rounded-lg max-h-96 object-cover"
-                  />
-                  <button
-                    onClick={handleRemoveImage}
-                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              )}
+          <div className="linkedin-time">{time}</div>
+        </header>
 
-              <p className="text-gray-400 text-sm mt-2">Or paste image URL:</p>
-              <input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 mt-1 focus:outline-none focus:border-blue-400"
-              />
+        {/* ── MAIN ── */}
+        <main className="linkedin-main">
+          {/* Auth Section */}
+          <div className="linkedin-section">
+            <div className="linkedin-section-header">
+              <span className="linkedin-section-icon">🔐</span>
+              <h2 className="linkedin-section-title">Authentication</h2>
             </div>
-            
-            <div className="flex gap-4">
-              <button
-                onClick={handlePost}
-                disabled={posting}
-                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition"
-              >
-                <Send size={20} />
-                {posting ? 'Posting...' : 'Post to LinkedIn'}
-              </button>
-              
-              <button
-                onClick={() => {
-                  setContent('')
-                  handleRemoveImage()
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 rounded-lg transition"
-              >
-                Clear
+            <div className="linkedin-section-content">
+              <button onClick={handleAuth} className="linkedin-auth-btn">
+                <Linkedin size={18} />
+                Connect LinkedIn
               </button>
             </div>
           </div>
-        )}
 
-      </main>
-    </div>
+          {/* Generate Section */}
+          <div className="linkedin-section">
+            <div className="linkedin-section-header">
+              <span className="linkedin-section-icon">✨</span>
+              <h2 className="linkedin-section-title">Generate Post</h2>
+            </div>
+            <div className="linkedin-section-content">
+              <div className="linkedin-field">
+                <label className="linkedin-label">Topic:</label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g., AI automation for restaurants"
+                  className="linkedin-input"
+                />
+              </div>
+              
+              <button
+                onClick={handleGenerate}
+                disabled={loading || !topic}
+                className="linkedin-gen-btn"
+              >
+                <Sparkles size={18} />
+                {loading ? 'Generating...' : 'Generate with AI'}
+              </button>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          {content && (
+            <div className="linkedin-section">
+              <div className="linkedin-section-header">
+                <span className="linkedin-section-icon">📝</span>
+                <h2 className="linkedin-section-title">Post Content</h2>
+              </div>
+              <div className="linkedin-section-content">
+                {/* Content Textarea */}
+                <div className="linkedin-field">
+                  <label className="linkedin-label">Content:</label>
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="linkedin-textarea"
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div className="linkedin-field">
+                  <label className="linkedin-label">Image (Optional):</label>
+                  
+                  {!imagePreview ? (
+                    <label className="linkedin-upload-area">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="linkedin-upload-input"
+                      />
+                      <Upload className="linkedin-upload-icon" size={48} />
+                      <div className="linkedin-upload-text">Click to upload image</div>
+                      <div className="linkedin-upload-hint">JPG, PNG, GIF (Max 5MB)</div>
+                    </label>
+                  ) : (
+                    <div className="linkedin-image-preview">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="linkedin-preview-img"
+                      />
+                      <button
+                        onClick={handleRemoveImage}
+                        className="linkedin-remove-btn"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="linkedin-url-hint">Or paste image URL:</div>
+                  <input
+                    type="text"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="linkedin-input"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="linkedin-actions">
+                  <button
+                    onClick={handlePost}
+                    disabled={posting}
+                    className="linkedin-post-btn"
+                  >
+                    <Send size={18} />
+                    {posting ? 'Posting...' : 'Post to LinkedIn'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setContent('')
+                      handleRemoveImage()
+                    }}
+                    className="linkedin-clear-btn"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
+    </>
   )
 }

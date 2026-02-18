@@ -13,6 +13,14 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [time, setTime] = useState('')
+
+  useState(() => {
+    const updateTime = () => setTime(new Date().toLocaleTimeString('en-US', { hour12: false }))
+    updateTime()
+    const t = setInterval(updateTime, 1000)
+    return () => clearInterval(t)
+  })
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -39,66 +47,385 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex flex-col">
-      <header className="bg-black/30 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/" className="text-white hover:text-blue-400 transition">
-            <ArrowLeft size={24} />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Bebas+Neue&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          background: #0A0A0A;
+          color: #E8E8E0;
+          font-family: 'IBM Plex Mono', monospace;
+          min-height: 100vh;
+        }
+
+        .chat-root {
+          min-height: 100vh;
+          background: #0A0A0A;
+          display: grid;
+          grid-template-rows: auto 1fr;
+        }
+
+        /* ── HEADER ── */
+        .chat-header {
+          border-bottom: 2px solid #E8E8E0;
+          padding: 0 40px;
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
+          height: 72px;
+          gap: 32px;
+        }
+        .chat-back {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          border: 1px solid #333;
+          color: #666;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+        .chat-back:hover {
+          border-color: #00FF88;
+          color: #00FF88;
+          background: #00FF88/5;
+        }
+        .chat-title-area {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+        .chat-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 28px;
+          letter-spacing: 0.08em;
+          color: #E8E8E0;
+        }
+        .chat-badge {
+          font-size: 9px;
+          letter-spacing: 0.2em;
+          color: #00FF88;
+          padding: 4px 12px;
+          border: 1px solid #00FF88;
+          background: #00FF88/10;
+        }
+        .chat-time {
+          font-size: 13px;
+          letter-spacing: 0.1em;
+          color: #555;
+        }
+
+        /* ── MAIN ── */
+        .chat-main {
+          display: grid;
+          grid-template-rows: 1fr auto;
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
+          height: calc(100vh - 72px);
+        }
+
+        /* ── MESSAGES AREA ── */
+        .chat-messages {
+          overflow-y: auto;
+          padding: 40px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        .chat-messages::-webkit-scrollbar {
+          width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+          background: #0A0A0A;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+          background: #1E1E1E;
+          border: 2px solid #0A0A0A;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+          background: #2A2A2A;
+        }
+
+        /* ── EMPTY STATE ── */
+        .chat-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          gap: 24px;
+        }
+        .chat-empty-icon {
+          color: #00FF88;
+          animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        .chat-empty-text {
+          font-size: 11px;
+          letter-spacing: 0.14em;
+          color: #555;
+          text-transform: uppercase;
+        }
+
+        /* ── MESSAGE BUBBLE ── */
+        .chat-msg {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+          animation: slideIn 0.3s ease both;
+        }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-msg-user {
+          flex-direction: row-reverse;
+        }
+
+        .chat-msg-icon {
+          flex-shrink: 0;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid;
+        }
+        .chat-msg-icon-assistant {
+          border-color: #00FF88;
+          color: #00FF88;
+          background: #00FF88/5;
+        }
+        .chat-msg-icon-user {
+          border-color: #0088FF;
+          color: #0088FF;
+          background: #0088FF/5;
+        }
+
+        .chat-msg-bubble {
+          max-width: 70%;
+          padding: 20px 24px;
+          font-size: 13px;
+          line-height: 1.7;
+          position: relative;
+        }
+        .chat-msg-bubble-assistant {
+          border: 1px solid #1E1E1E;
+          background: #0F0F0F;
+          color: #CCC;
+        }
+        .chat-msg-bubble-assistant::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: #00FF88;
+        }
+        .chat-msg-bubble-user {
+          border: 1px solid #0088FF;
+          background: #0088FF/10;
+          color: #E8E8E0;
+        }
+        .chat-msg-bubble-user::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: #0088FF;
+        }
+
+        /* ── LOADING ── */
+        .chat-loading {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+        }
+        .chat-loading-bubble {
+          padding: 20px 24px;
+          border: 1px solid #1E1E1E;
+          background: #0F0F0F;
+          display: flex;
+          gap: 8px;
+        }
+        .chat-loading-dot {
+          width: 6px;
+          height: 6px;
+          background: #00FF88;
+          border-radius: 50%;
+          animation: bounce 1.4s ease-in-out infinite;
+        }
+        .chat-loading-dot:nth-child(1) { animation-delay: 0s; }
+        .chat-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .chat-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        /* ── INPUT AREA ── */
+        .chat-input-area {
+          border-top: 2px solid #E8E8E0;
+          padding: 24px 40px;
+          background: #0A0A0A;
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 16px;
+          align-items: center;
+        }
+        .chat-input {
+          background: #0F0F0F;
+          border: 1px solid #1E1E1E;
+          color: #E8E8E0;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 13px;
+          padding: 18px 24px;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .chat-input::placeholder {
+          color: #444;
+        }
+        .chat-input:focus {
+          border-color: #00FF88;
+        }
+        .chat-send-btn {
+          width: 56px;
+          height: 56px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #00FF88;
+          background: transparent;
+          color: #00FF88;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .chat-send-btn:hover:not(:disabled) {
+          background: #00FF88;
+          color: #0A0A0A;
+        }
+        .chat-send-btn:disabled {
+          border-color: #333;
+          color: #333;
+          cursor: not-allowed;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+          .chat-header {
+            grid-template-columns: auto 1fr;
+            padding: 0 20px;
+          }
+          .chat-time { display: none; }
+          .chat-messages { padding: 20px; }
+          .chat-input-area { padding: 16px 20px; }
+          .chat-msg-bubble { max-width: 85%; }
+        }
+
+        /* ── SCANLINE ── */
+        .chat-root::after {
+          content: '';
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.04) 2px,
+            rgba(0,0,0,0.04) 4px
+          );
+          z-index: 100;
+        }
+      `}</style>
+
+      <div className="chat-root">
+        {/* ── HEADER ── */}
+        <header className="chat-header">
+          <Link href="/" className="chat-back">
+            <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-3xl font-bold text-white">💬 AI Chat</h1>
-        </div>
-      </header>
+          
+          <div className="chat-title-area">
+            <h1 className="chat-title">AI CHAT</h1>
+            <span className="chat-badge">LIVE</span>
+          </div>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8 flex flex-col">
-        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-20">
-              <Bot className="mx-auto text-blue-400 mb-4" size={48} />
-              <p className="text-gray-400">Start a conversation with your AI Employee</p>
-            </div>
-          ) : (
-            messages.map((msg, i) => (
-              <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.role === 'assistant' && <Bot className="text-blue-400 mt-1" size={24} />}
-                <div className={`max-w-[70%] rounded-2xl p-4 ${
-                  msg.role === 'user' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-white/10 text-gray-200 border border-white/20'
-                }`}>
-                  {msg.content}
-                </div>
-                {msg.role === 'user' && <User className="text-gray-400 mt-1" size={24} />}
-              </div>
-            ))
-          )}
-          {loading && (
-            <div className="flex gap-3">
-              <Bot className="text-blue-400 mt-1" size={24} />
-              <div className="bg-white/10 rounded-2xl p-4 border border-white/20">
-                <span className="animate-pulse">Thinking...</span>
-              </div>
-            </div>
-          )}
-        </div>
+          <div className="chat-time">{time}</div>
+        </header>
 
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask your AI Employee..."
-            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-6 py-4 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
-          />
-          <button
-            onClick={handleSend}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-8 rounded-xl flex items-center gap-2 transition"
-          >
-            <Send size={20} />
-          </button>
-        </div>
-      </main>
-    </div>
+        {/* ── MAIN ── */}
+        <main className="chat-main">
+          {/* Messages */}
+          <div className="chat-messages">
+            {messages.length === 0 ? (
+              <div className="chat-empty">
+                <Bot className="chat-empty-icon" size={64} />
+                <p className="chat-empty-text">Start a conversation with your AI Employee</p>
+              </div>
+            ) : (
+              <>
+                {messages.map((msg, i) => (
+                  <div 
+                    key={i} 
+                    className={`chat-msg ${msg.role === 'user' ? 'chat-msg-user' : ''}`}
+                  >
+                    <div className={`chat-msg-icon ${msg.role === 'assistant' ? 'chat-msg-icon-assistant' : 'chat-msg-icon-user'}`}>
+                      {msg.role === 'assistant' ? <Bot size={20} /> : <User size={20} />}
+                    </div>
+                    <div className={`chat-msg-bubble ${msg.role === 'assistant' ? 'chat-msg-bubble-assistant' : 'chat-msg-bubble-user'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+
+                {loading && (
+                  <div className="chat-loading">
+                    <div className="chat-msg-icon chat-msg-icon-assistant">
+                      <Bot size={20} />
+                    </div>
+                    <div className="chat-loading-bubble">
+                      <div className="chat-loading-dot" />
+                      <div className="chat-loading-dot" />
+                      <div className="chat-loading-dot" />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="chat-input-area">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Ask your AI Employee..."
+              className="chat-input"
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              className="chat-send-btn"
+            >
+              <Send size={20} />
+            </button>
+          </div>
+        </main>
+      </div>
+    </>
   )
 }
